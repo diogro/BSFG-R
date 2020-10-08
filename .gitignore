@@ -27,3 +27,6 @@ docs/site/
 Manifest.toml
 .ipynb_checkpoints/
 BFGS.ipynb
+
+BSFG.sublime-workspace
+BSFGmat.sublime-workspace
