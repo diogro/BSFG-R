@@ -264,22 +264,22 @@ struct Priors
     
     nrun::Int64
     function Priors(draw_iter, burn, sp, thin, b0, b1, epsilon, h2_divisions, k_init, 
-                    as, bs, df, ad1, bd1, ad2, bd2, k_min, prop)
+        as, bs, df, ad1, bd1, ad2, bd2, k_min, prop)
         nrun = burn+sp*thin
         new(draw_iter, burn, sp, thin, b0, b1, epsilon, h2_divisions, k_init, 
-                    as, bs, df, ad1, bd1, ad2, bd2, k_min, prop, nrun)
+            as, bs, df, ad1, bd1, ad2, bd2, k_min, prop, nrun)
     end
 end
 
 function sample_lambda!(Factors::LatentFactors, Ytil::Array{Float64, 2}, 
-                        resid::Residuals, genetic_effects::GeneticEffects, eig_ZAZ::SVD)
-#Sample factor loadings (Factors.Lambda) while marginalizing over residual
-#genetic effects: Y - Z_2W = FL' + E, vec(E)~N(0,kron(Psi_E,In) + kron(Psi_U, ZAZ^T))
-# note: conditioning on W, but marginalizing over U.
-#  sampling is done separately by trait because each column of Lambda is
-#  independent in the conditional posterior
-# note: eig_ZAZ has parameters that diagonalize aI + bZAZ for fast
-#  inversion: inv(aI + bZAZ) = 1/b*Ur*diag(1./(eta+a/b))*Ur'
+    resid::Residuals, genetic_effects::GeneticEffects, eig_ZAZ::SVD)
+    #Sample factor loadings (Factors.Lambda) while marginalizing over residual
+    #genetic effects: Y - Z_2W = FL' + E, vec(E)~N(0,kron(Psi_E,In) + kron(Psi_U, ZAZ^T))
+    # note: conditioning on W, but marginalizing over U.
+    #  sampling is done separately by trait because each column of Lambda is
+    #  independent in the conditional posterior
+    # note: eig_ZAZ has parameters that diagonalize aI + bZAZ for fast
+    #  inversion: inv(aI + bZAZ) = 1/b*Ur*diag(1./(eta+a/b))*Ur'
     p=resid.p
     k=Factors.k
 
@@ -290,31 +290,31 @@ function sample_lambda!(Factors::LatentFactors, Ytil::Array{Float64, 2},
 
     Zlams = rand(Normal(0,1),k,p);
     for j = 1:p
-         FUDi  = genetic_effects.ps[j] * broadcast(*, FtU, 1. ./ (eta' .+ genetic_effects.ps[j]/resid.ps[j]));
-         means = FUDi * UtY[:,j];
-         Qlam  = FUDi*FtU' + diagm(Factors.Plam[j,:]); 
-         Llam  = cholesky(Hermitian(Qlam)).L
-         vlam  = Llam  \ means; 
-         mlam  = Llam' \ vlam; 
-         ylam  = Llam' \ Zlams[:,j];
-         Factors.Lambda[j,:] = (ylam + mlam);
+       FUDi  = genetic_effects.ps[j] * broadcast(*, FtU, 1. ./ (eta' .+ genetic_effects.ps[j]/resid.ps[j]));
+       means = FUDi * UtY[:,j];
+       Qlam  = FUDi*FtU' + diagm(Factors.Plam[j,:]); 
+       Llam  = cholesky(Hermitian(Qlam)).L
+       vlam  = Llam  \ means; 
+       mlam  = Llam' \ vlam; 
+       ylam  = Llam' \ Zlams[:,j];
+       Factors.Lambda[j,:] = (ylam + mlam);
     end
 end
 
 function sample_means(Ytil::Array{Float64, 2}, Qt_Design::Array{Float64, 2}, N::Int64, 
-                      resid::Residuals, random_precision::Array{Float64, 1}, svd_Design_Ainv::Dict)
-# when used to sample [B;D]:
-# Y - FL' - Z_2W = XB + ZD + E, vec(E)~N(0,kron(Psi_E,In)). 
-# Note: conditioning on F, L and W.
-#  The vector [b_j;d_j] is sampled simultaneously. Each trait is sampled separately because their
-#  conditional posteriors factor into independent MVNs.
-# Note:svd_Design_Ainv has parameters to diagonalize mixed model equations for fast inversion: 
-#  inv(a*blkdiag(fixed_effects.cov,Ainv) + b*[X; Z_1][X; Z_1]') = Q*diag(1./(a.*s1+b.*s2))*Q'
-# Qt_Design = Q'*Design, which doesn't change each iteration. Design = [X;Z_1]
-#
-# function also used to sample W:
-#  Y - FL' - XB - ZD = Z_2W + E, vec(E) ~ N(0,kron(Psi_E,In)). 
-#  Here, conditioning is on B and D.
+  resid::Residuals, random_precision::Array{Float64, 1}, svd_Design_Ainv::Dict)
+    # when used to sample [B;D]:
+    # Y - FL' - Z_2W = XB + ZD + E, vec(E)~N(0,kron(Psi_E,In)). 
+    # Note: conditioning on F, L and W.
+    #  The vector [b_j;d_j] is sampled simultaneously. Each trait is sampled separately because their
+    #  conditional posteriors factor into independent MVNs.
+    # Note:svd_Design_Ainv has parameters to diagonalize mixed model equations for fast inversion: 
+    #  inv(a*blkdiag(fixed_effects.cov,Ainv) + b*[X; Z_1][X; Z_1]') = Q*diag(1./(a.*s1+b.*s2))*Q'
+    # Qt_Design = Q'*Design, which doesn't change each iteration. Design = [X;Z_1]
+    #
+    # function also used to sample W:
+    #  Y - FL' - XB - ZD = Z_2W + E, vec(E) ~ N(0,kron(Psi_E,In)). 
+    #  Here, conditioning is on B and D.
 
     p=resid.p;
 
@@ -335,9 +335,9 @@ function sample_means(Ytil::Array{Float64, 2}, Qt_Design::Array{Float64, 2}, N::
 end
 
 function sample_h2s_discrete!(Factors::LatentFactors, eig_ZAZ::SVD)
-# sample factor heritibilties from a discrete set on [0,1)
-# prior places 50% of the weight at h2=0
-# samples conditional on F, marginalizes over U.
+    # sample factor heritibilties from a discrete set on [0,1)
+    # prior places 50% of the weight at h2=0
+    # samples conditional on F, marginalizes over U.
 
     Ur = eig_ZAZ.U;
     eta = eig_ZAZ.S;
@@ -352,12 +352,12 @@ function sample_h2s_discrete!(Factors::LatentFactors, eig_ZAZ::SVD)
         h2 = (i-1)/s;
         std_scores = Factors.scores;
         if h2 > 0
-            std_scores = 1/sqrt(h2) * broadcast(*, std_scores_b ,1. ./ sqrt.(eta .+ (1-h2)/h2)');
+            std_scores = 1/sqrt(h2) * broadcast(*, std_scores_b, 1. ./ sqrt.(eta .+ (1-h2)/h2)');
             det = sum(log.((eta .+ (1-h2)/h2) * h2) / 2.);
         else       
             det = 0;
         end
-        log_ps[:,i] = sum(logpdf(Normal(0, 1), std_scores), dims = 2) .- det;
+        log_ps[:,i] = sum(logpdf(Normal(0, 1), std_scores), dims = 2) .- det; #Prior on h2
         if i==1
             log_ps = log_ps .+ log(s-1);
         end
@@ -372,13 +372,13 @@ end
 
 function sample_Us!(Factors::LatentFactors, genetic_effects::GeneticEffects, 
                     svd_ZZ_Ainv::Dict, Z_1::Array{Float64, 2})
-#samples genetic effects (U) conditional on the factor scores F:
-# F_i = U_i + E_i, E_i~N(0,s2*(h2*ZAZ + (1-h2)*I)) for each latent trait i
-# U_i = zeros(r,1) if h2_i = 0
-# it is assumed that s2 = 1 because this scaling factor is absorbed in
-# Lambda
-# svd_ZZ_Ainv has parameters to diagonalize a*Z_1*Z_1' + b*I for fast
-# inversion:
+    #samples genetic effects (U) conditional on the factor scores F:
+    # F_i = U_i + E_i, E_i~N(0,s2*(h2*ZAZ + (1-h2)*I)) for each latent trait i
+    # U_i = zeros(r,1) if h2_i = 0
+    # it is assumed that s2 = 1 because this scaling factor is absorbed in
+    # Lambda
+    # svd_ZZ_Ainv has parameters to diagonalize a*Z_1*Z_1' + b*I for fast
+    # inversion:
 
     Q = svd_ZZ_Ainv["Q"];
     s1 = svd_ZZ_Ainv["s1"];
@@ -394,7 +394,7 @@ function sample_Us!(Factors::LatentFactors, genetic_effects::GeneticEffects,
         if tau_e[j]==1
             genetic_effects.U[j,:] = zeros(1,n);
         elseif isinf(tau_e[j])
-                genetic_effects.U[j,:] = Factors.scores[j,:];
+            genetic_effects.U[j,:] = Factors.scores[j,:];
         else
             d = s2 * tau_u[j] + s1 * tau_e[j];
             mlam = broadcast(*, b[:,j], 1. ./ d);
@@ -404,7 +404,7 @@ function sample_Us!(Factors::LatentFactors, genetic_effects::GeneticEffects,
 end
 
 function sample_factors_scores!(Ytil::Array{Float64, 2}, Factors::LatentFactors, 
-                                resid::Residuals, genetic_effects::GeneticEffects, Z_1::Array{Float64, 2})
+    resid::Residuals, genetic_effects::GeneticEffects, Z_1::Array{Float64, 2})
 #Sample factor scores given factor loadings, U, factor heritabilities and
 #phenotype residuals
 
@@ -420,8 +420,8 @@ end
 
 
 function sample_delta!( Factors::LatentFactors, Lambda2_resid )
-#sample delta and tauh parameters that control the magnitudes of higher
-#index factor loadings.
+    #sample delta and tauh parameters that control the magnitudes of higher
+    #index factor loadings.
 
     ad1 = Factors.ad1;
     ad2 = Factors.ad2;
@@ -446,7 +446,7 @@ function sample_delta!( Factors::LatentFactors, Lambda2_resid )
 end
 
 function  update_k!(Factors::LatentFactors, genetic_effects::GeneticEffects, 
-                    b0::Float64, b1::Float64, i::Int64, epsilon::Float64, prop::Float64, Z_1::Array{Float64, 2} )
+    b0::Float64, b1::Float64, i::Int64, epsilon::Float64, prop::Float64, Z_1::Array{Float64, 2} )
 #adapt the number of factors by dropping factors with only small loadings
 #if they exist, or adding new factors sampled from the prior if all factors
 #appear important. The rate of adaptation decreases through the chain,
@@ -505,7 +505,6 @@ function  update_k!(Factors::LatentFactors, genetic_effects::GeneticEffects,
         end
     end
     Factors.nofout[i+1]=k;
-
 end
 
 function save_posterior_samples!(sp_num::Int64, Pr::Priors, D::InputData, Posterior::PosteriorSample, 
@@ -513,8 +512,6 @@ function save_posterior_samples!(sp_num::Int64, Pr::Priors, D::InputData, Poster
                                  genetic_effects::GeneticEffects, Factors::LatentFactors, 
                                  interaction_effects::InteractionEffects)
     #save posteriors. Re-scale samples back to original variances.
-
-    #save factors
     sp = Pr.sp;
     VY = D.Var_Y';       
     Lambda = broadcast(*, Factors.Lambda, sqrt.(VY'));     #re-scale by Y variances
@@ -526,12 +523,12 @@ function save_posterior_samples!(sp_num::Int64, Pr::Priors, D::InputData, Poster
 
     # save factor samples
     Lambda = Lambda[:,1:Factors.k];
-             
+
     Posterior.Lambda[sp_num] = copy(Lambda);
     Posterior.delta[sp_num] = copy(delta);
     Posterior.G_h2[sp_num] = copy(G_h2);
     Posterior.U[sp_num] = copy(U);
-    
+
     Posterior.no_f[sp_num] = Factors.k;
 
     Posterior.ps[:,sp_num] = copy(genetic_ps);
@@ -544,8 +541,9 @@ function save_posterior_samples!(sp_num::Int64, Pr::Priors, D::InputData, Poster
 
 end
 
-function sampleBSF_G!(Posterior::PosteriorSample, genetic_effects::GeneticEffects, Factors::LatentFactors,
-                      resid::Residuals, interaction_effects::InteractionEffects, fixed_effects::FixedEffects,
+function sampleBSF_G!(Posterior::PosteriorSample, genetic_effects::GeneticEffects, 
+                      Factors::LatentFactors, resid::Residuals, 
+                      interaction_effects::InteractionEffects, fixed_effects::FixedEffects,
                       D::InputData, Pr::Priors)
     #precalculate some matrices
     #invert the random effect covariance matrices
@@ -591,9 +589,7 @@ function sampleBSF_G!(Posterior::PosteriorSample, genetic_effects::GeneticEffect
     svd_ZZ_Ainv = makeSVDdict(ZZt, Array(Ainv))
     # inv(Array(ZZt) + Array(Ainv)) ≈ svd_ZZ_Ainv["Q"] * diagm(1. ./ (svd_ZZ_Ainv["s1"]+svd_ZZ_Ainv["s2"])) * svd_ZZ_Ainv["Q"]'
 
-    #------start gibbs sampling-----#
     sp_num=0
-    #tic()
     @showprogress 1 "Running Gibbs sampler..." for i = 1:Pr.nrun
 
         ##fill in missing phenotypes
@@ -633,7 +629,7 @@ function sampleBSF_G!(Posterior::PosteriorSample, genetic_effects::GeneticEffect
         #conditioning on F; marginalizing over U
         sample_h2s_discrete!(Factors, eig_ZAZ)
 
-          #sample genetic effects [U]
+        #sample genetic effects [U]
         #conditioning on F; Factor h2
         sample_Us!(Factors, genetic_effects, svd_ZZ_Ainv, D.Z_1)
 
@@ -661,36 +657,30 @@ function sampleBSF_G!(Posterior::PosteriorSample, genetic_effects::GeneticEffect
         #random effect 1 [D] residual precision
         inv_b_g = 1. ./ (genetic_effects.bs .+ 0.5 * sum(genetic_effects.d .^ 2, dims=2))
         for i = 1:D.p
-           genetic_effects.ps[i] = rand(Gamma(genetic_effects.as + 0.5 * genetic_effects.n, inv_b_g[i]))
+         genetic_effects.ps[i] = rand(Gamma(genetic_effects.as + 0.5 * genetic_effects.n, inv_b_g[i]))
         end
 
         #n = interaction_effects.n
         #interaction_effects.ps=gamrnd[interaction_effects.as + 0.5*n,1./(interaction_effects.bs+0.5*sum(interaction_effects.W.^2,dims=2))]; #random effect 2 [W] residual precision
 
-      #------Update delta & tauh------#
+        #------Update delta & tauh------#
         sample_delta!(Factors, Lambda2)
 
-      #---update precision parameters----#
-
+        #---update precision parameters----#
         Factors.Plam = broadcast(*, Factors.psijh, Factors.tauh')
 
-      # ----- adapt number of factors to samples ----#
-
+        # ----- adapt number of factors to samples ----#
         update_k!( Factors, genetic_effects, Pr.b0, Pr.b1 ,i , Pr.epsilon, Pr.prop, D.Z_1 )
 
-      # -- save sampled values [after thinning] -- #
+        # -- save sampled values [after thinning] -- #
         if i%Pr.thin==0 && i > Pr.burn
-
             sp_num = Int64((i-Pr.burn)/Pr.thin)
             save_posterior_samples!(sp_num, Pr, D, Posterior, resid, fixed_effects,
-                                                genetic_effects, Factors, interaction_effects)
-
+                genetic_effects, Factors, interaction_effects)
         end
     end
 end
 
-# Calculate posterior means of G, R, P, Lambda, factor_h2s, h2s
-# VY = ones(p,1)';
 function PosteriorMeans(Posterior::PosteriorSample, D::InputData, Pr::Priors)
     kmax = convert(Int64, maximum(Posterior.no_f));
 
@@ -727,12 +717,12 @@ function PosteriorMeans(Posterior::PosteriorSample, D::InputData, Pr::Priors)
     end
 
     posterior_mean = Dict("G" => G_est,
-                          "P" => P_est,
-                          "E" => E_est,
-                          "Gs" => G_s,
-                          "Ps" => P_s,
-                          "Es" => E_s,
-                          "Lambda" => Lambda_est,
-                          "F_h2s" => factor_h2s_est)
+      "P" => P_est,
+      "E" => E_est,
+      "Gs" => G_s,
+      "Ps" => P_s,
+      "Es" => E_s,
+      "Lambda" => Lambda_est,
+      "F_h2s" => factor_h2s_est)
     posterior_mean
 end
