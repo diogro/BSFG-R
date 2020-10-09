@@ -5,6 +5,9 @@ Version: 0.1.0
 Author: Who wrote it
 Maintainer: Diogo Melo <diogro@gmail.com>
 Description: R interface to the Julia implementation of the BSF-G algorithm from Runcie and Mukherjee (2013)
+Imports: JuliaCall,
+    nadiv,
+    R.matlab
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
