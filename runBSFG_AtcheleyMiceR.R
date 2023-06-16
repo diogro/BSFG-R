@@ -10,12 +10,12 @@ if(!require(tidyverse)){install.packages("tidyverse"); library(tidyverse)}
 data("mice_pedigree")
 fullA = makeA(mice_pedigree)
 
-skull_data = mice_crania$ed %>%
-  filter(Gen == "F6")
+skull_data = mice_crania$ed %>%  filter(Gen == "F6")
 skull_formula = paste0("cbind(",
                        paste(names(dplyr::select(skull_data, IS_PM:BA_OPI)),
                              collapse = ", "), ") ~ Sex + Litter_size_birth + Birth_litter_size_weaning + Foster_litter_size_weaning")
 modelInput = genAnimalModelInput(skull_formula, skull_data, fullA, out_type = "julia", out_folder = "BSFG_julia_mice")
+
 attach(modelInput)
 julia_setup()
 julia_library("BayesianSparseFactorGmatrix")

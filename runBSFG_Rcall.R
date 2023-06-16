@@ -23,6 +23,7 @@ ped = randomPed(50, 5, seed = 1)
 ped = prepPed(as.data.frame(ped[1:3]))
 A = as.matrix(nadiv::makeA(ped))
 A_chol = chol(A)
+
 corrG <- matrix(c(1, 0.7, 0.0,
                   0.7, 1, 0.5,
                   0.0, 0.5,   1), 3, 3, byrow = T)
@@ -34,6 +35,7 @@ varE = 1.5*varG
 G = sqrt(varG) %*% t(sqrt(varG)) * corrG
 E = sqrt(varE) %*% t(sqrt(varE)) * corrE
 varG / (varG + varE)
+
 p = ncol(G)
 r = nrow(A)
 a = t(A_chol) %*% matrix(rnorm(p*r),r,p) %*% chol(G)
@@ -48,6 +50,7 @@ colnames(beta) = c("x", "y", "z")
 rownames(beta) = c("Intercept", "sex", "Z")
 
 sex = as.numeric(factor(mice_info$F6$Sex)[1:nrow(a)])-1
+
 Z = rnorm(nrow(a))
 Intercept = rep(1, nrow(a))
 X = cbind(Intercept, sex, Z)
@@ -57,6 +60,7 @@ e = rmvnorm(nrow(a), sigma = E)
 Y = X %*% beta + a + e
 
 colnames(Y) = c("x", "y", "z")
+
 out_folder = "BSFG_run"
 out_file = file.path(out_folder, "/setup.h5")
 if(file.exists(out_file))
@@ -69,7 +73,10 @@ h5write(as.matrix(A), out_file, name="Input/A")
 h5write(diag(nrow(A)), out_file, name="Input/Z_1")
 H5close()
 
-
+julia_setup()
+julia_library("BayesianSparseFactorGmatrix")
+bsf_out = julia_call("runBSFGModel", Y, t(X), A, diag(nrow(Y)),
+                     burn=as.integer(1000)[1], sp=as.integer(1000)[1], thin=as.integer(10)[1])
 G_julia = bsf_out[[1]]$G
 E_julia = bsf_out[[1]]$E
 diag(G_julia) / (diag(G_julia + E_julia))
