@@ -4,16 +4,27 @@
 \alias{genAnimalModelInput}
 \title{Generate input for BSFG model in Matlab and Julia}
 \usage{
-genAnimalModelInput(formula, data, A, IDcol = "ID", out_folder = NULL)
+genAnimalModelInput(
+  formula,
+  data,
+  A,
+  IDcol = "ID",
+  out_type = c("none", "julia", "matlab"),
+  out_folder = "BSFG_run"
+)
 }
 \arguments{
-\item{formula}{formula specifing fixed effects and response variables}
+\item{formula}{formula specifying fixed effects and response variables}
 
-\item{data}{data.frame with data, default is ratonesdf}
+\item{data}{data.frame with data.}
 
-\item{A}{relatinship matrix from pedigree}
+\item{A}{relationship matrix from pedigree}
 
-\item{out_folder}{folder to create the Matlab input files}
+\item{IDcol}{Which column has the individual IDs which match the A matrix rownames.}
+
+\item{out_type}{Default is none to output object to R. Choose 'julia' for HDF5 or 'matlab' for mat}
+
+\item{out_folder}{folder to create the Matlab or Julia input files}
 }
 \value{
 list with animal model input objects
@@ -29,5 +40,5 @@ formula = paste0("cbind(",
           paste(names(dplyr::select(ratonesdf, IS_PM:BA_OPI)),
                 collapse = ", "), ") ~ SEX + AGE")
 animal_model_data = generateAnimalModelInput(formula, ratonesdf,
-                                             ratones_ped$A, out_foldel = "./")
+                                             ratones_ped$A, out_folder = "./")
 }
